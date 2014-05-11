@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:hdp="http://www.springframework.org/schema/hadoop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:int-ip="http://www.springframework.org/schema/integration/ip"
+	xsi:schemaLocation="http://www.springframework.org/schema/integration/ip http://www.springframework.org/schema/integration/ip/spring-integration-ip.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream-2.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+		http://www.springframework.org/schema/hadoop http://www.springframework.org/schema/hadoop/spring-hadoop.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+	<context:property-placeholder location="application.properties" />
+
+	<hdp:configuration register-url-handler="false">
+		fs.defaultFS=${hadoop.hdfs.fs}
+	</hdp:configuration>
+
+
+	<bean id="hadoopFs"
+		class="org.springframework.data.hadoop.fs.FileSystemFactoryBean">
+		<property name="configuration" ref="hadoopConfiguration" />
+	</bean>
+	
+
+	<bean id="hdfsWritingMessageHandler"
+		class="org.haden.training.spring.springintegration.syslogarchiver.hdfsutils.HdfsWritingMessageHandler">
+		<constructor-arg ref="hdfsWriterFactory" />
+	</bean>
+
+	<bean id="hdfsWriterFactory"
+		class="org.haden.training.spring.springintegration.syslogarchiver.hdfsutils.HdfsTextFileWriterFactory">
+		<constructor-arg ref="hadoopFs" />
+		<property name="basePath" value="${hadoop.hdfs.filePath}" />
+		<property name="baseFilename" value="${hadoop.hdfs.fileName}" />
+		<property name="fileSuffix" value="${hadoop.hdfs.fileSuffix}" />
+		<property name="rolloverThresholdInBytes" value="${hadoop.hdfs.rolloverThresholdInBytes}" />
+	</bean>
+
+	
+
+
+</beans>

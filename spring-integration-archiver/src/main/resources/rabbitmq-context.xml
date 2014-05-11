@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 	
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit"	
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 		http://www.springframework.org/schema/beans/spring-beans.xsd 		
+		http://www.springframework.org/schema/rabbit 		http://www.springframework.org/schema/rabbit/spring-rabbit.xsd		
+		http://www.springframework.org/schema/context 		http://www.springframework.org/schema/context/spring-context-3.1.xsd		
+		">
+		
+		<context:property-placeholder location="application.properties" />
+		
+		<rabbit:connection-factory id="rabbitMQConnectionFactory" addresses="${rabbitmq.host.addresses}" username="${rabbitmq.host.username}" password="${rabbitmq.host.password}" virtual-host="/" />	
+			
+		<rabbit:template id="amqpTemplate" connection-factory="rabbitMQConnectionFactory" />	
+		
+		
+		<bean id="amqpTemplate"
+	    	class="org.springframework.amqp.rabbit.core.RabbitTemplate">
+			    <property name="connectionFactory" ref="rabbitMQConnectionFactory" />
+			    <property name="exchange" value="${rabbitmq.exchange.name}" />
+			    <property name="queue" value="${rabbitmq.queue.name}" />
+			    <property name="routingKey" value="${rabbitmq.key.binding}" />
+		</bean>
+			
+		<rabbit:admin connection-factory="rabbitMQConnectionFactory" />		
+		
+		<rabbit:queue name="${rabbitmq.queue.name}" />
+				
+		<rabbit:direct-exchange name="${rabbitmq.exchange.name}">
+				<rabbit:bindings>
+					<rabbit:binding queue="${rabbitmq.queue.name}" key="${rabbitmq.key.binding}" />
+				</rabbit:bindings>
+		</rabbit:direct-exchange>
+
+</beans>

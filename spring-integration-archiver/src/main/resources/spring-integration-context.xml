@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:int-amqp="http://www.springframework.org/schema/integration/amqp"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+	xmlns:int-ip="http://www.springframework.org/schema/integration/ip"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/integration/ip 		http://www.springframework.org/schema/integration/ip/spring-integration-ip.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration-3.0.xsd		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration/stream 		http://www.springframework.org/schema/integration/stream/spring-integration-stream-2.1.xsd
+		http://www.springframework.org/schema/integration/amqp 		http://www.springframework.org/schema/integration/amqp/spring-integration-amqp.xsd
+		http://www.springframework.org/schema/rabbit 		http://www.springframework.org/schema/rabbit/spring-rabbit.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd		
+		">
+		
+		<context:property-placeholder location="application.properties" />
+		
+		
+		<bean id="javaSerializer" class="org.springframework.core.serializer.DefaultSerializer" />
+		<bean id="javaDeserializer" class="org.springframework.core.serializer.DefaultDeserializer" />
+		
+		<int:channel id="fromAMQP" />
+		<int:channel id="toAMQP" />				
+		
+		<int-amqp:inbound-gateway request-channel="fromAMQP" reply-channel="toAMQP" queue-names="${rabbitmq.queue.name}" connection-factory="rabbitMQConnectionFactory"/>
+		
+		<int:chain id="hadoopWriter" input-channel="fromAMQP">
+			<int:object-to-string-transformer />
+			<int:outbound-channel-adapter ref="hdfsWritingMessageHandler" />
+		</int:chain>
+		
+
+		
+</beans>

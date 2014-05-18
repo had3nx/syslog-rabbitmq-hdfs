@@ -19,16 +19,46 @@
 		
 		<bean id="javaSerializer" class="org.springframework.core.serializer.DefaultSerializer" />
 		<bean id="javaDeserializer" class="org.springframework.core.serializer.DefaultDeserializer" />
+		<bean id="messageAggregatorBean" class="org.haden.training.spring.springintegration.syslogarchiver.MessageAggregator" />
+		
 		
 		<int:channel id="fromAMQP" />
-		<int:channel id="toAMQP" />				
+		<int:channel id="toAMQP" />	
+		<int:channel id="aggregated" />				
+					
 		
-		<int-amqp:inbound-gateway request-channel="fromAMQP" reply-channel="toAMQP" queue-names="${rabbitmq.queue.name}" connection-factory="rabbitMQConnectionFactory"/>
+		<int-amqp:inbound-gateway request-channel="fromAMQP" reply-channel="toAMQP" queue-names="${rabbitmq.queue.name}" connection-factory="rabbitMQConnectionFactory"  mapped-request-headers="*" />
 		
-		<int:chain id="hadoopWriter" input-channel="fromAMQP">
+		<bean id="aggregateMessageStore" class="org.springframework.integration.store.SimpleMessageStore" >
+     			 <constructor-arg type="int" value="5000"/>
+		
+		</bean>		
+		
+		
+		
+		<int:aggregator input-channel="fromAMQP" output-channel="aggregated" 
+			method="aggregate"
+			ref="messageAggregatorBean"
+			correlation-strategy="messageAggregatorBean" correlation-strategy-method="correlate"
+			release-strategy-expression="size() == ${buffer.messsage.size}"
+			message-store="aggregateMessageStore"
+			expire-groups-upon-completion="true"
+			send-partial-result-on-expiry="true" />			 
+   		
+
+
+
+ 
+ 		<int:chain id="hadoopWriter" input-channel="aggregated">
 			<int:object-to-string-transformer />
 			<int:outbound-channel-adapter ref="hdfsWritingMessageHandler" />
-		</int:chain>
+		 </int:chain> 
+ 
+		
+		 <!--  <int-stream:stdout-channel-adapter channel="aggregated" append-newline="true"/> -->
+		
+		
+		
 		
 
 		
